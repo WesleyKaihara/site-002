@@ -1,17 +1,24 @@
 const express = require('express');
 const Joi = require('joi')
 const modelos = require('./modelos')
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const criptografia = require('./helpers/criptografia');
+const jwt = require('./helpers/jwt');
 
 const port = 3000;
 var path =require('path');   //manipular dados
-const { ppid } = require('process');
 const app = express();       //definir rotas
 
-
+app.use(cookieParser());
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.engine('html',require('ejs').renderFile);
 app.set('view engine','html');
 app.use('/public',express.static(__dirname +'public'));
 app.use('/static',express.static('static'));
+app.use('/views',express.static('views'));
 
 
 app.set('views',path.join(__dirname,'/views'));
@@ -44,7 +51,7 @@ function validacaoCadastro(request, response, next) {
 //--------------------------------------------------
 app.post('/cadastro', validacaoCadastro, async function(req, res, next) {
     const usuarioExistente = await modelos.Usuario
-      .where('email', '=', req.body.email)
+      .where('email','=', req.body.email)
       .fetch();
     if (usuarioExistente) {
       res.status(400).json({
@@ -65,10 +72,10 @@ app.post('/cadastro', validacaoCadastro, async function(req, res, next) {
 //------------------------------------------------------
 function validaLogin(req,res,next){
     const schema = Joi.object({
-        email:Joi.string.min(1).max(200).required(),
-        senha:Joi.string.min(6).max(80).required(),
+        email:Joi.string().min(1).max(200).required(),
+        senha:Joi.string().min(6).max(80).required(),
     });
-    const resultado = schema.validade(req.body);
+    const resultado = schema.validate(req.body);
     if(resultado.error){
         res.status(400).json(resultado.error);
     }
@@ -78,31 +85,27 @@ function validaLogin(req,res,next){
 }
 
 //------------------------------------------------------
-app.post('/login',validaLogin,async function(req,res) {
-    const usuarioExistente = await modelos.Usuario
-    .Where('email','=',req.body.email)
+app.post('/login', validaLogin, async function (req, res) {
+  const usuarioExistente = await modelos.Usuario
+    .where('email', '=', req.body.email)
     .fetch();
-
-if(usuarioExistente){
-    const senhaEstaCorreta = criptografia.comparaHash(req.body.senha,usuarioExistente.get('senha'))
-    if(senhaEstaCorreta){
-        const token = jwt.geraToken(usuarioExistente);
-        res.json({
-            token:token,
-            Usuario:usuarioExistente,
-             });
-         }else{
-             res.status(400).json({
-                 mensagem:'As credenciais são inválidas'
-             })
-         }
-
+  
+  if (usuarioExistente) {
+    const senhaEstaCorreta = criptografia.comparaHash(req.body.senha, usuarioExistente.get('senha'))
+    if (senhaEstaCorreta) {
+      res.render('logado');
+    } else {
+      res.status(400).json({
+        mensagem: 'As credenciais são inválidas',
+      });
     }
-else{
+    // res.json(usuarioExistente);
+    // return;
+  } else {
     res.status(400).json({
-        mensagem:'As credenciais são inválidas'
+      mensagem: 'As credenciais são inválidas',
     });
-}
+  }
 });
 
 

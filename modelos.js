@@ -5,7 +5,7 @@ const knex = createKnex({
     debug:true,
     useNullAsDefault:true,
     connection:{
-        filename:'./site002.sqlite3'
+        filename:'./site002.sqlite3',
     }
 });
 const bookshelf = require('bookshelf')(knex);

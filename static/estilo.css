@@ -394,6 +394,24 @@ footer a {
     box-shadow: 0 0 10px 2px #8a8a8a;
 }
 
+.logado h1{
+    text-align: center;
+    padding-top: 200px;
+    font-size: 60px;
+    color: #fdad00;
+}
+
+.logado p  {
+    text-align: center;
+    border: 0;
+}
+
+.PaginaLogado{
+    background: #000;
+    width: 100%;
+    height: 937px;
+}
+
 @media(max-width:1200px){
     .grid{
         grid-template-columns: 100%;
